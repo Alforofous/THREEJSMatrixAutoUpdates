@@ -9,17 +9,19 @@ export interface HierarchicalGridObjectsConfig
 
 export class HierarchicalGridObjects extends THREE.Object3D
 {
-	private config: Required<HierarchicalGridObjectsConfig>;
+	private _config: Required<HierarchicalGridObjectsConfig>;
 	private spacing = 2.5;
 	private gridObjects: THREE.Object3D[][] = [];
 	private instancedMesh1: THREE.InstancedMesh;
 	private instancedMesh2: THREE.InstancedMesh;
 	private instancedMesh3: THREE.InstancedMesh;
+	private gridHelper?: THREE.GridHelper;
+	private plane?: THREE.Mesh;
 
 	constructor(config: HierarchicalGridObjectsConfig = {})
 	{
 		super();
-		this.config = {
+		this._config = {
 			objectCount: 1000,
 			groundPlane: true,
 			...config
@@ -27,27 +29,86 @@ export class HierarchicalGridObjects extends THREE.Object3D
 		this.instancedMesh1 = InstanceTracker3D.createInstancedMesh(
 			new THREE.BoxGeometry(1, 1, 1),
 			new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
-			this.config.objectCount
+			this._config.objectCount
 		);
 		this.add(this.instancedMesh1);
 		this.instancedMesh2 = InstanceTracker3D.createInstancedMesh(
 			new THREE.CylinderGeometry(0.5, 0.5, 1, 32),
 			new THREE.MeshLambertMaterial({ color: 0xff0000 }),
-			this.config.objectCount
+			this._config.objectCount
 		);
 		this.add(this.instancedMesh2);
 		this.instancedMesh3 = InstanceTracker3D.createInstancedMesh(
 			new THREE.ConeGeometry(0.5, 1, 32),
 			new THREE.MeshLambertMaterial({ color: 0x0000ff }),
-			this.config.objectCount
+			this._config.objectCount
 		);
 		this.add(this.instancedMesh3);
 		this.build();
 	}
 
+	get config(): HierarchicalGridObjectsConfig
+	{
+		return this._config;
+	}
+
 	build(): void
 	{
-		if (this.config.groundPlane)
+		const gridObjects = this.getGridObjects();
+		gridObjects.forEach(row =>
+		{
+			row.forEach(object =>
+			{
+				if (object instanceof InstanceTracker3D)
+				{
+					object.dispose();
+				}
+			});
+		});
+		if (this.gridHelper)
+		{
+			this.gridHelper.dispose();
+			this.remove(this.gridHelper);
+			this.gridHelper = undefined;
+		}
+		if (this.plane)
+		{
+			const materials = Array.isArray(this.plane.material) ? this.plane.material : [this.plane.material];
+			materials.forEach(material =>
+			{
+				material.dispose();
+			});
+			this.plane.geometry.dispose();
+			this.remove(this.plane);
+			this.plane = undefined;
+		}
+		this.instancedMesh1.dispose();
+		this.instancedMesh2.dispose();
+		this.instancedMesh3.dispose();
+		this.remove(this.instancedMesh1);
+		this.remove(this.instancedMesh2);
+		this.remove(this.instancedMesh3);
+
+		this.instancedMesh1 = InstanceTracker3D.createInstancedMesh(
+			new THREE.BoxGeometry(1, 1, 1),
+			new THREE.MeshLambertMaterial({ color: 0x00ff00 }),
+			this._config.objectCount
+		);
+		this.add(this.instancedMesh1);
+		this.instancedMesh2 = InstanceTracker3D.createInstancedMesh(
+			new THREE.CylinderGeometry(0.5, 0.5, 1, 32),
+			new THREE.MeshLambertMaterial({ color: 0xff0000 }),
+			this._config.objectCount
+		);
+		this.add(this.instancedMesh2);
+		this.instancedMesh3 = InstanceTracker3D.createInstancedMesh(
+			new THREE.ConeGeometry(0.5, 1, 32),
+			new THREE.MeshLambertMaterial({ color: 0x0000ff }),
+			this._config.objectCount
+		);
+		this.add(this.instancedMesh3);
+
+		if (this._config.groundPlane)
 		{
 			this.addGroundPlane();
 		}
@@ -60,6 +121,7 @@ export class HierarchicalGridObjects extends THREE.Object3D
 		const gridSize = this.gridSize * this.spacing;
 		const gridHelper = new THREE.GridHelper(gridSize, gridSize, 0x6a6a6a, 0x222225); 0
 		gridHelper.position.y = 0;
+		this.gridHelper = gridHelper;
 		this.add(gridHelper);
 
 		const planeGeometry = new THREE.PlaneGeometry(gridSize, gridSize);
@@ -72,12 +134,13 @@ export class HierarchicalGridObjects extends THREE.Object3D
 		const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 		plane.rotation.x = -Math.PI / 2;
 		plane.position.y = -0.01;
+		this.plane = plane;
 		this.add(plane);
 	}
 
 	public get gridSize(): number
 	{
-		return Math.ceil(Math.sqrt(this.config.objectCount));
+		return Math.ceil(Math.sqrt(this._config.objectCount));
 	}
 
 	private createGridObjects(): void
@@ -87,10 +150,10 @@ export class HierarchicalGridObjects extends THREE.Object3D
 		let level0Count = 0;
 
 		this.gridObjects = [];
-		for (let i = 1; i < gridSize && level0Count <= this.config.objectCount; i++)
+		for (let i = 1; i < gridSize && level0Count <= this._config.objectCount; i++)
 		{
 			this.gridObjects.push([]);
-			for (let j = 1; j < gridSize && level0Count <= this.config.objectCount; j++)
+			for (let j = 1; j < gridSize && level0Count <= this._config.objectCount; j++)
 			{
 				const x = (i - gridSize / 2) * this.spacing;
 				const z = (j - gridSize / 2) * this.spacing;
@@ -116,19 +179,6 @@ export class HierarchicalGridObjects extends THREE.Object3D
 				this.gridObjects[i - 1][j - 1] = rootObject;
 			}
 		}
-	}
-
-	public traverseGridObjects(callback: (object: THREE.Object3D, x: number, y: number) => void): void
-	{
-		this.gridObjects.forEach((row, x) =>
-		{
-			row.forEach((object, y) => callback(object, x, y));
-		});
-	}
-
-	public getGridObject(x: number, y: number): THREE.Object3D
-	{
-		return this.gridObjects[x][y];
 	}
 
 	public getGridObjects(): THREE.Object3D[][]

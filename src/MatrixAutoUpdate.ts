@@ -7,6 +7,12 @@ declare module 'three'
 	{
 		matrixNeedsUpdate: boolean;
 	}
+
+	interface Object3DEventMap
+	{
+		matrixUpdated: THREE.Event<'matrixUpdated', THREE.Object3D>;
+		matrixWorldUpdated: THREE.Event<'matrixWorldUpdated', THREE.Object3D>;
+	}
 }
 
 export let updatedMatrices = 0;
@@ -19,11 +25,6 @@ export function resetUpdatedWorldMatrices()
 {
 	updatedWorldMatrices = 0;
 }
-
-type Object3DMatrixUpdateEventMap = THREE.Object3DEventMap & {
-	matrixUpdated: THREE.Event<'matrixUpdated', THREE.Object3D>;
-	matrixWorldUpdated: THREE.Event<'matrixWorldUpdated', THREE.Object3D>;
-};
 
 export function patchObject3DChangeListener(object: THREE.Object3D): void
 {
@@ -59,7 +60,7 @@ export function patchObject3DChangeListener(object: THREE.Object3D): void
 			this.matrix.compose(this.position, this.quaternion, this.scale);
 			this.matrixWorldNeedsUpdate = true;
 			updatedMatrices++;
-			this.dispatchEvent({ type: 'matrixUpdated', target: this } as unknown as Parameters<typeof this.dispatchEvent>[0]);
+			this.dispatchEvent({ type: 'matrixUpdated', target: this });
 		}
 	}
 
@@ -78,7 +79,7 @@ export function patchObject3DChangeListener(object: THREE.Object3D): void
 					this.matrixWorld.multiplyMatrices(this.parent.matrixWorld, this.matrix);
 				}
 				updatedWorldMatrices++;
-				this.dispatchEvent({ type: 'matrixWorldUpdated', target: this } as unknown as Parameters<typeof this.dispatchEvent>[0]);
+				this.dispatchEvent({ type: 'matrixWorldUpdated', target: this });
 			}
 			this.matrixWorldNeedsUpdate = false;
 			force = true;
