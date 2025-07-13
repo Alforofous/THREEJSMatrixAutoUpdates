@@ -26,6 +26,43 @@ export function resetUpdatedWorldMatrices()
 	updatedWorldMatrices = 0;
 }
 
+THREE.Object3D.prototype.updateMatrix = function ()
+{
+	this.matrix.compose(this.position, this.quaternion, this.scale);
+	this.matrixWorldNeedsUpdate = true;
+	updatedMatrices++;
+	this.dispatchEvent({ type: 'matrixUpdated', target: this });
+}
+
+THREE.Object3D.prototype.updateMatrixWorld = function (force?: boolean)
+{
+	if (this.matrixAutoUpdate) this.updateMatrix();
+	if (this.matrixWorldNeedsUpdate || force)
+	{
+		if (this.matrixWorldAutoUpdate === true)
+		{
+			if (this.parent === null)
+			{
+				this.matrixWorld.copy(this.matrix);
+			} else
+			{
+				this.matrixWorld.multiplyMatrices(this.parent.matrixWorld, this.matrix);
+			}
+			updatedWorldMatrices++;
+			this.dispatchEvent({ type: 'matrixWorldUpdated', target: this });
+		}
+		this.matrixWorldNeedsUpdate = false;
+		force = true;
+	}
+
+	const children = this.children;
+	for (let i = 0, l = children.length; i < l; i++)
+	{
+		const child = children[i];
+		child.updateMatrixWorld(force);
+	}
+}
+
 export function patchObject3DChangeListener(object: THREE.Object3D): void
 {
 	object.matrixNeedsUpdate = true;

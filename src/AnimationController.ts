@@ -16,16 +16,10 @@ export class AnimationController
 	private lastWaveTime: number = 0;
 	private waveInterval: number = 500;
 	private isWaveActive: boolean = false;
-	private maxConcurrentAnimations: number = 100;
 
 	constructor()
 	{
 		this.tweenGroup = new Group();
-	}
-
-	public setMaxConcurrentAnimations(max: number): void
-	{
-		this.maxConcurrentAnimations = max;
 	}
 
 	public initializeAnimations(objectsToAnimate: THREE.Object3D[][]): void
@@ -66,8 +60,6 @@ export class AnimationController
 	{
 		if (!this.isWaveActive) return;
 
-		let currentAnimations = 0;
-
 		if (currentTime - this.lastWaveTime >= this.waveInterval)
 		{
 			if (this.currentRowIndex < this.objectAnimations.length)
@@ -76,10 +68,9 @@ export class AnimationController
 
 				for (const animation of animations)
 				{
-					if (!animation.isAnimating && currentAnimations < this.maxConcurrentAnimations)
+					if (!animation.isAnimating)
 					{
 						animation.isAnimating = true;
-						currentAnimations++;
 						this.createJumpAnimation(animation, () =>
 						{
 							animation.isAnimating = false;

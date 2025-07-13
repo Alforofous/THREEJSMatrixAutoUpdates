@@ -1,7 +1,7 @@
 export class PerformanceDisplay
 {
 	private displayDivs: HTMLDivElement[] = [];
-	private topPosition: number = 100;
+	private yPosition: number = 10;
 
 	constructor()
 	{
@@ -12,7 +12,7 @@ export class PerformanceDisplay
 	{
 		const displayDiv = document.createElement('div');
 		displayDiv.style.position = 'absolute';
-		displayDiv.style.top = `${this.topPosition}px`;
+		displayDiv.style.bottom = `${this.yPosition}px`;
 		displayDiv.style.right = '10px';
 		displayDiv.style.color = 'white';
 		displayDiv.style.fontFamily = 'monospace';
@@ -25,7 +25,7 @@ export class PerformanceDisplay
 		displayDiv.style.userSelect = 'none';
 		document.body.appendChild(displayDiv);
 
-		this.topPosition += 40;
+		this.yPosition += 40;
 		return displayDiv;
 	}
 

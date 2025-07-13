@@ -32,10 +32,6 @@ gui.add(config, 'animationInterval', 10, 2000).onChange(() =>
 {
 	animationController.setWaveInterval(config.animationInterval);
 });
-gui.add(config, 'maxConcurrentAnimations', 10, 500).onChange(() =>
-{
-	animationController.setMaxConcurrentAnimations(config.maxConcurrentAnimations);
-});
 gui.add(hierarchicalGridObjects.config, 'objectCount', 1000, 100000).onFinishChange(() =>
 {
 	init();
@@ -50,7 +46,6 @@ function init(): void
 	hierarchicalGridObjects.build();
 	animationController.initializeAnimations(hierarchicalGridObjects.getGridObjects());
 	animationController.setWaveInterval(config.animationInterval);
-	animationController.setMaxConcurrentAnimations(config.maxConcurrentAnimations);
 	animationController.startWaveAnimation();
 	scene.add(hierarchicalGridObjects);
 	if (config.patchObject3DChangeListener)
@@ -104,8 +99,8 @@ function animate()
 
 	const animationStats = animationController.getAnimationStats();
 	performanceDisplay.updateAllStats(
-		config.patchObject3DChangeListener ? updatedMatrices : Infinity,
-		config.patchObject3DChangeListener ? updatedWorldMatrices : Infinity,
+		updatedMatrices,
+		updatedWorldMatrices,
 		animationStats.animatingObjects,
 		animationStats.totalObjects
 	);
