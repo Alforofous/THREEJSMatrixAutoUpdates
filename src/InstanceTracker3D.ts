@@ -16,7 +16,6 @@ export class InstanceTracker3D<TEventMap extends InstanceTrackerEventMap = Insta
 	#mesh: THREE.InstancedMesh;
 	#index: number = -1;
 	#color: THREE.Color | null = null;
-	#boundingAreasNeedUpdate: boolean = false;
 	#visible: boolean = true;
 
 	constructor(mesh: THREE.InstancedMesh)
@@ -33,11 +32,11 @@ export class InstanceTracker3D<TEventMap extends InstanceTrackerEventMap = Insta
 		{
 			this.#mesh.callbacks?.onBeforeMatrixWorldUpdate.set(updateBoundingAreasKey, () =>
 			{
-				if (this.#boundingAreasNeedUpdate)
+				if (this.#mesh.userData.boundingAreasNeedUpdate)
 				{
 					this.#mesh.computeBoundingBox();
 					this.#mesh.computeBoundingSphere();
-					this.#boundingAreasNeedUpdate = false;
+					this.#mesh.userData.boundingAreasNeedUpdate = false;
 				}
 			});
 
@@ -79,25 +78,19 @@ export class InstanceTracker3D<TEventMap extends InstanceTrackerEventMap = Insta
 	{
 		const oldMatrix = new THREE.Matrix4();
 		this.#mesh.getMatrixAt(this.#index, oldMatrix);
-		if (!oldMatrix.equals(this.matrixWorld))
+		const newMatrix = this.matrixWorld.clone().multiply(this.#mesh.matrixWorld.clone().invert());
+		if (!oldMatrix.equals(newMatrix))
 		{
-			this.#mesh.setMatrixAt(this.#index, this.matrixWorld);
+			this.#mesh.setMatrixAt(this.#index, newMatrix);
 			this.#mesh.instanceMatrix.needsUpdate = true;
-			this.#boundingAreasNeedUpdate = true;
+			this.#mesh.userData.boundingAreasNeedUpdate = true;
 		}
 	}
 
 	updateMatrixWorld(force: boolean = false): void
 	{
 		super.updateMatrixWorld(force);
-		const oldMatrix = new THREE.Matrix4();
-		this.#mesh.getMatrixAt(this.#index, oldMatrix);
-		if (!oldMatrix.equals(this.matrixWorld))
-		{
-			this.#mesh.setMatrixAt(this.#index, this.matrixWorld);
-			this.#mesh.instanceMatrix.needsUpdate = true;
-			this.#boundingAreasNeedUpdate = true;
-		}
+		this.updateInstanceMatrix();
 	}
 
 	dispose(): void

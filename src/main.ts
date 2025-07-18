@@ -12,8 +12,9 @@ document.body.appendChild(stats.dom);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0f0f0f);
+const objectCount = 20000;
 const hierarchicalGridObjects = new HierarchicalGridObjects({
-	objectCount: 20000,
+	objectCount: objectCount,
 	groundPlane: true,
 });
 
@@ -58,21 +59,25 @@ function init(): void
 }
 
 
-const ambientLight = new THREE.AmbientLight(0x6f6f6f, 0.2);
+const ambientLight = new THREE.AmbientLight(0x6f6f6f, 0.7);
 scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
 directionalLight.position.set(10, 10, 5);
 scene.add(directionalLight);
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(20, 20, 20);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
+const distance = Math.sqrt(objectCount) / 2;
+const lookFrom = new THREE.Vector3(distance, distance, distance).add(scene.position);
+controls.object.position.set(lookFrom.x, lookFrom.y, lookFrom.z);
+const lookAt = scene.position;
+controls.target.set(lookAt.x, lookAt.y, lookAt.z);
 controls.zoomToCursor = true;
 delete controls.mouseButtons.LEFT;
 controls.mouseButtons.MIDDLE = THREE.MOUSE.PAN;

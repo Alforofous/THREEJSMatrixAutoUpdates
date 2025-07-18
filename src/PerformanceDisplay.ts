@@ -31,7 +31,6 @@ export class PerformanceDisplay
 
 	private createDisplayDivs(): void
 	{
-		// Create 4 display divs for different metrics
 		for (let i = 0; i < 4; i++)
 		{
 			this.displayDivs.push(this.createDisplayDiv());

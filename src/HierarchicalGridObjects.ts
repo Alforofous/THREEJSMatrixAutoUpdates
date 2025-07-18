@@ -119,7 +119,7 @@ export class HierarchicalGridObjects extends THREE.Object3D
 	private addGroundPlane(): void
 	{
 		const gridSize = this.gridSize * this.spacing;
-		const gridHelper = new THREE.GridHelper(gridSize, gridSize, 0x6a6a6a, 0x222225); 0
+		const gridHelper = new THREE.GridHelper(gridSize, gridSize, 0x6a6a6a, 0x222225);
 		gridHelper.position.y = 0;
 		this.gridHelper = gridHelper;
 		this.add(gridHelper);
